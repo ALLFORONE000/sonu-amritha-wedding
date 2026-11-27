@@ -159,6 +159,13 @@ animation:waxStamp .55s cubic-bezier(.2,.9,.3,1.15) forwards}
 .letter .wish small{color:#6b4a2a}
 #prog{position:fixed;top:0;left:0;right:0;height:3px;z-index:60;background:linear-gradient(90deg,var(--gold-lo),var(--gold-hi));transform-origin:0 50%;transform:scaleX(0)}
 @media(prefers-reduced-motion:reduce){#gate{transition:none}html{scroll-behavior:auto}html.js .rv{opacity:1!important;transform:none!important;transition:none!important}}
+#calsheet{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;z-index:9999;padding:18px}
+#calsheet.on{display:flex}
+.cs-box{width:100%;max-width:400px;background:var(--card);border:1px solid var(--gold);border-radius:6px;padding:22px 18px;text-align:center;box-shadow:0 0 40px rgba(212,175,55,.25)}
+.cs-box h3{margin:0 0 14px;font-family:'Great Vibes',cursive;font-weight:400;font-size:2.2rem;color:var(--gold-hi)}
+.cs-list{display:flex;flex-direction:column;gap:10px}
+.cs-btn{display:block;padding:13px 12px;border-radius:3px;background:linear-gradient(135deg,var(--gold-lo),var(--gold) 45%,var(--gold-hi));color:#120c00;text-decoration:none;font:inherit;font-weight:700;border:0;cursor:pointer;font-size:1rem}
+.cs-x{margin-top:14px;background:none;border:0;color:var(--gold);font:inherit;text-decoration:underline;cursor:pointer}
 </style>
 </head>
 <body>
@@ -270,15 +277,60 @@ function tick(){
 }
 tick(); setInterval(tick,1000);
 
-// calendar (.ics)
-document.getElementById("cal").addEventListener("click", e=>{
-  e.preventDefault();
-  const ics = ["BEGIN:VCALENDAR","VERSION:2.0","BEGIN:VEVENT","DTSTART:20270114T063000Z","DTEND:20270114T093000Z",
-  "SUMMARY:Wedding of Sonu Shajin & Dr. Amritha Ajith","LOCATION:Sreebhadra Auditorium\\, Vellanad\\, Trivandrum","END:VEVENT","END:VCALENDAR"].join("\r\n");
-  const a = document.createElement("a");
-  a.href = "data:text/calendar;charset=utf-8," + encodeURIComponent(ics);
-  a.download = "wedding.ics"; document.body.appendChild(a); a.click(); a.remove();
-});
+// calendar: opens the phone's own calendar (Google Calendar app / iPhone Calendar)
+const EVENTS = [
+  {key:"wedding", label:"Wedding · 14 Jan 2027", title:"Wedding of Sonu Shajin & Dr. Amritha Ajith",
+   start:"20270114T063000Z", end:"20270114T093000Z",
+   loc:"Sreebhadra Auditorium, Vellanad, Trivandrum", desc:"Holy Matrimony - 12:00 noon"},
+  {key:"reception", label:"Reception · 23 Jan 2027", title:"Wedding Reception of Sonu & Amritha",
+   start:"20270123T063000Z", end:"20270123T093000Z",
+   loc:"Valayanattu Auditorium, Ranni, Pathanamthitta", desc:"Reception - 12:00 pm"}
+];
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+const isAndroid = /Android/i.test(navigator.userAgent);
+const esc = t => t.replace(/\\/g,"\\\\").replace(/,/g,"\\,").replace(/;/g,"\\;").replace(/\n/g,"\\n");
+function googleUrl(ev){
+  return "https://calendar.google.com/calendar/render?action=TEMPLATE&text="+encodeURIComponent(ev.title)+
+    "&dates="+ev.start+"/"+ev.end+"&location="+encodeURIComponent(ev.loc)+"&details="+encodeURIComponent(ev.desc);
+}
+function icsText(list){
+  const L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Sonu & Amritha//Wedding//EN","CALSCALE:GREGORIAN","METHOD:PUBLISH"];
+  list.forEach(ev=>{L.push("BEGIN:VEVENT","UID:"+ev.key+"-2027@sonu-amritha-wedding","DTSTAMP:20261101T000000Z",
+    "DTSTART:"+ev.start,"DTEND:"+ev.end,"SUMMARY:"+esc(ev.title),"LOCATION:"+esc(ev.loc),"DESCRIPTION:"+esc(ev.desc),
+    "BEGIN:VALARM","TRIGGER:-P1D","ACTION:DISPLAY","DESCRIPTION:Wedding tomorrow","END:VALARM","END:VEVENT");});
+  L.push("END:VCALENDAR"); return L.join("\r\n");
+}
+function openIcs(list){
+  const blob = new Blob([icsText(list)],{type:"text/calendar;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  // Navigating (not "download") lets iPhone Safari show its "Add to Calendar" sheet
+  window.location.href = url;
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+const sheet = document.createElement("div");
+sheet.id = "calsheet";
+sheet.innerHTML = '<div class="cs-box" role="dialog" aria-label="Add to calendar"><h3>Add to Calendar</h3><div class="cs-list"></div><button class="cs-x" type="button">Close</button></div>';
+document.body.appendChild(sheet);
+const csList = sheet.querySelector(".cs-list");
+function addBtn(text, fn, href){
+  const el = document.createElement(href ? "a" : "button");
+  el.className = "cs-btn"; el.textContent = text;
+  if(href){ el.href = href; el.target = "_blank"; el.rel = "noopener"; el.addEventListener("click",()=>sheet.classList.remove("on")); }
+  else { el.type = "button"; el.addEventListener("click",()=>{ sheet.classList.remove("on"); fn(); }); }
+  csList.appendChild(el);
+}
+if(isIOS){
+  addBtn("iPhone Calendar · Wedding + Reception", ()=>openIcs(EVENTS));
+  EVENTS.forEach(ev=>addBtn("Google Calendar · "+ev.label, null, googleUrl(ev)));
+}else if(isAndroid){
+  EVENTS.forEach(ev=>addBtn("Google Calendar · "+ev.label, null, googleUrl(ev)));
+  addBtn("Other calendar app · both events", ()=>openIcs(EVENTS));
+}else{
+  EVENTS.forEach(ev=>addBtn("Google Calendar · "+ev.label, null, googleUrl(ev)));
+  addBtn("Apple / Outlook · both events (.ics)", ()=>openIcs(EVENTS));
+}
+sheet.addEventListener("click",e=>{ if(e.target===sheet || e.target.classList.contains("cs-x")) sheet.classList.remove("on"); });
+document.getElementById("cal").addEventListener("click", e=>{ e.preventDefault(); sheet.classList.add("on"); });
 
 // Wishes are stored centrally in Google Sheets through Apps Script.
 const WISHES_API = "https://script.google.com/macros/s/AKfycbyWKpS-hgsbjhbk4cJ89nH5aDUXP0-h1ElbuY3m9Vagr8PAyHagBVZZ_FMzcYXCng-s/exec";
