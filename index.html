@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sonu & Amritha – Wedding Invitation</title>
 <meta name="theme-color" content="#000000">
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Great+Vibes&family=Pinyon+Script&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#000;--card:#0b0906;--gold:#d4af37;--gold-hi:#f6e6a8;--gold-lo:#8f6f22;--text:#e2c872;--line:rgba(212,175,55,.35);color-scheme:dark;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -20,7 +20,10 @@ header{text-align:center;padding:64px 0 34px;border-bottom:1px solid var(--line)
 .verse{font-style:italic;color:var(--gold);font-size:1.05rem;max-width:420px;margin:0 auto 24px;opacity:.9}
 .invite{color:var(--text);font-style:italic;font-size:1.12rem}
 .names{font-family:'Great Vibes',cursive;font-weight:400;line-height:1.1;margin:14px 0}
-.names .n{font-size:clamp(3rem,13vw,5.6rem);display:block;background:linear-gradient(100deg,var(--gold-lo),var(--gold-hi) 40%,var(--gold) 60%,var(--gold-lo));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--gold);padding:.05em .1em}
+.names .n{font-size:clamp(2.6rem,12vw,5.6rem);display:block;background:linear-gradient(100deg,var(--gold-lo),var(--gold-hi) 40%,var(--gold) 60%,var(--gold-lo));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:var(--gold);padding:.05em .1em}
+.names .cap{font-family:'Pinyon Script','Great Vibes',cursive;font-size:1.05em;line-height:1}
+.names .n{padding-top:.2em!important}
+.names .n{white-space:nowrap}
 .names .w{font-size:clamp(1.6rem,6vw,2.4rem);color:var(--gold);display:block}
 .orn{color:var(--gold);letter-spacing:.5em;margin:16px 0}
 .date-big{font-size:1.5rem;color:var(--gold-hi);font-weight:600;letter-spacing:.06em}
@@ -175,7 +178,7 @@ animation:waxStamp .55s cubic-bezier(.2,.9,.3,1.15) forwards}
 <header>
   <div class="verse">“The Lord has made everything beautiful in his time.”<br>Eccl 3:11</div>
   <div class="invite">Mr. Shajin George &amp; Mrs. Shiju Shajin<br>cordially request your presence and prayers at the holy matrimony of our son</div>
-  <h1 class="names" style="font-weight:400"><span class="n">Sonu Shajin</span><span class="w">with</span><span class="n">Dr. Amritha Ajith</span></h1>
+  <h1 class="names" style="font-weight:400"><span class="n">Sonu Shajin</span><span class="w">with</span><span class="n">Dr. <span class="cap">A</span>mritha <span class="cap">A</span>jith</span></h1>
   <div class="invite">D/O Mr Ajith &amp; Mrs. Aseela Ajith</div>
   <div class="orn">◆ ❤ ◆</div>
   <div class="date-big">Thursday, 14th January 2027</div>
@@ -252,7 +255,7 @@ animation:waxStamp .55s cubic-bezier(.2,.9,.3,1.15) forwards}
 
 <script>
 // ---- Settings: put the family WhatsApp number (country code, digits only) here, e.g. "919876543210"
-const WHATSAPP = "";
+const WHATSAPP = "917559041925";
 const WEDDING = new Date("2027-01-14T12:00:00+05:30").getTime();
 
 function tick(){
@@ -706,8 +709,8 @@ bgm.addEventListener("play",sync);bgm.addEventListener("pause",sync);
   if(!link) return;
   const update=()=>{
     const root=document.documentElement;
-    const atBottom=(window.scrollY + window.innerHeight) >= (root.scrollHeight - 48);
-    link.classList.toggle('on',atBottom);
+    const atBottom=window.scrollY>300&&(window.scrollY + window.innerHeight) >= (root.scrollHeight - 48);
+    link.classList.toggle('on',!document.body.classList.contains('locked')&&atBottom);
   };
   window.addEventListener('scroll',update,{passive:true});
   window.addEventListener('resize',update);
