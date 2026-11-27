@@ -2,10 +2,47 @@
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#080604"><title>Private Wishes Book | Sonu &amp; Amritha</title>
 <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:wght@400;600&display=swap" rel="stylesheet">
 <style>
-:root{--gold:#d4af37;--cream:#f4e7c5;--bg:#080604}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#24170c,var(--bg) 65%);color:var(--cream);font-family:'Cormorant Garamond',serif;display:grid;place-items:center;padding:24px}.wrap{width:min(100%,620px);text-align:center}.orn{color:var(--gold);letter-spacing:.5em}.script{font-family:'Great Vibes',cursive;font-size:clamp(2.8rem,9vw,4.5rem);color:var(--gold);margin:14px 0}.panel{border:1px solid rgba(212,175,55,.55);background:rgba(0,0,0,.45);padding:clamp(24px,6vw,44px);box-shadow:0 18px 60px #0008}.muted{color:#c7b78e;font-size:1.1rem;line-height:1.5}input{width:100%;padding:14px;margin:18px 0 12px;background:#100c08;border:1px solid #806522;color:var(--cream);font:inherit;font-size:1.1rem}button,.back{display:inline-block;border:1px solid var(--gold);background:transparent;color:var(--gold);padding:12px 24px;font:inherit;font-size:1.1rem;text-decoration:none;cursor:pointer}.status{min-height:1.5em;color:#d7b95c}.fine{font-size:.9rem;color:#a99a7b;margin-top:22px}
-</style></head><body><main class="wrap"><div class="orn">◆ ✦ ◆</div><h1 class="script">Our Wedding Wishes</h1><section class="panel"><h2>Sonu &amp; Amritha</h2><p class="muted">This is a private keepsake for the people we love. Please enter the access password shared with you.</p><form id="gate"><input id="pass" type="password" autocomplete="current-password" placeholder="Access password" required><button type="submit">Open the Book</button></form><p class="status" id="status" role="status"></p><p class="fine">The wishes book is being connected to its private storage. Messages will appear here once the secure connection is configured.</p></section><p><a class="back" href="index.html">← Back to invitation</a></p></main>
+:root{--gold:#d4af37;--cream:#f4e7c5;--bg:#080604}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#24170c,var(--bg) 65%);color:var(--cream);font-family:'Cormorant Garamond',serif;display:grid;place-items:center;padding:24px}.wrap{width:min(100%,700px);text-align:center}.orn{color:var(--gold);letter-spacing:.5em}.script{font-family:'Great Vibes',cursive;font-size:clamp(2.8rem,9vw,4.5rem);color:var(--gold);margin:14px 0}.panel{border:1px solid rgba(212,175,55,.55);background:rgba(0,0,0,.45);padding:clamp(22px,5vw,42px);box-shadow:0 18px 60px #0008}.muted{color:#c7b78e;font-size:1.1rem;line-height:1.5}input{width:100%;padding:14px;margin:18px 0 12px;background:#100c08;border:1px solid #806522;color:var(--cream);font:inherit;font-size:1.1rem}button,.back{display:inline-block;border:1px solid var(--gold);background:transparent;color:var(--gold);padding:11px 22px;font:inherit;font-size:1.1rem;text-decoration:none;cursor:pointer;margin:5px}.status{min-height:1.5em;color:#d7b95c}.fine{font-size:.9rem;color:#a99a7b;margin-top:22px}#book{display:none}.page{min-height:280px;margin:22px auto;padding:36px 28px;max-width:560px;background:linear-gradient(135deg,#f5e8c9,#e8d4a8);color:#422b17;box-shadow:0 12px 30px #0008;display:flex;flex-direction:column;justify-content:center;white-space:pre-wrap;overflow-wrap:anywhere}.page h2{font-family:'Great Vibes',cursive;font-size:2.6rem;color:#7a4a20;margin:0 0 18px}.page .message{font-size:1.35rem;line-height:1.55}.page .guest{margin-top:24px;font-weight:600;font-size:1.2rem}.controls{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:8px}#counter{color:#d7b95c}@media print{body{display:block;background:white;color:#000;padding:0}.no-print{display:none!important}#book{display:block!important}.page{page-break-after:always;break-after:page;box-shadow:none;margin:0 auto;width:100%;min-height:95vh;background:white;color:#222;border:1px solid #c8b88f}.page h2{color:#65421f}}
+</style></head><body><main class="wrap"><div class="orn no-print">◆ ✦ ◆</div><h1 class="script no-print">Our Wedding Wishes</h1>
+<section class="panel no-print" id="login"><h2>Sonu &amp; Amritha</h2><p class="muted">A private keepsake of the love and blessings shared with us. Enter the access password to open the book.</p><form id="gate"><input id="pass" type="password" autocomplete="current-password" placeholder="Access password" required><button id="openBtn" type="submit">Open the Book</button></form><p class="status" id="status" role="status"></p></section>
+<section id="book"><div class="controls no-print"><button id="prev">← Previous</button><span id="counter"></span><button id="next">Next →</button><button id="pdf">Download PDF</button></div><div id="pages"></div><p class="no-print"><button id="logout">Lock Book</button></p></section>
+<p class="no-print"><a class="back" href="index.html">← Back to invitation</a></p></main>
 <script>
-// Secure password validation and private wish retrieval must be handled by a server endpoint.
-// Do not put a real password or private wishes in this static file: GitHub Pages source is public.
-document.getElementById('gate').addEventListener('submit',e=>{e.preventDefault();document.getElementById('status').textContent='Private access is not activated yet. The secure server connection must be configured first.';});
+const API = 'https://script.google.com/macros/s/AKfycbyWKpS-hgsbjhbk4cJ89nH5aDUXP0-h1ElbuY3m9Vagr8PAyHagBVZZ_FMzcYXCng-s/exec';
+let wishes = [], current = 0, accessPassword = '';
+const statusEl = document.getElementById('status');
+function showPage() {
+ const holder=document.getElementById('pages'); holder.textContent='';
+ const page=document.createElement('article'); page.className='page';
+ const title=document.createElement('h2'); title.textContent=wishes.length ? 'A Wish for the Couple' : 'Our Wedding Wishes';
+ const message=document.createElement('div'); message.className='message';
+ const guest=document.createElement('div'); guest.className='guest';
+ if(wishes.length) { message.textContent=wishes[current].message || ''; guest.textContent='— '+(wishes[current].name || 'A guest'); }
+ else { message.textContent='Your guests’ wishes will appear here once they have been sent.'; }
+ page.append(title,message,guest); holder.append(page);
+ document.getElementById('counter').textContent=wishes.length ? `${current+1} / ${wishes.length}` : '0 wishes';
+ document.getElementById('prev').disabled=current<=0;
+ document.getElementById('next').disabled=current>=wishes.length-1;
+}
+document.getElementById('gate').addEventListener('submit', async e=>{
+ e.preventDefault(); const btn=document.getElementById('openBtn');
+ accessPassword=document.getElementById('pass').value; btn.disabled=true; statusEl.textContent='Checking password…';
+ try {
+  const res=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'list',password:accessPassword})});
+  const data=await res.json(); if(!data.success) throw new Error(data.message || 'Unable to open the book.');
+  wishes=(data.wishes||[]).slice().reverse(); current=0;
+  document.getElementById('login').style.display='none'; document.getElementById('book').style.display='block';
+  showPage();
+ } catch(err) { statusEl.textContent=err.message==='Incorrect password.'?'That password is incorrect.':'Could not connect to the wishes book. Check the Apps Script deployment and try again.'; }
+ finally {btn.disabled=false;}
+});
+document.getElementById('prev').addEventListener('click',()=>{if(current>0){current--;showPage();}});
+document.getElementById('next').addEventListener('click',()=>{if(current<wishes.length-1){current++;showPage();}});
+document.getElementById('pdf').addEventListener('click',()=>{
+ const holder=document.getElementById('pages'); holder.textContent='';
+ if(!wishes.length) { showPage(); window.print(); return; }
+ wishes.forEach(w=>{const page=document.createElement('article');page.className='page';const h=document.createElement('h2');h.textContent='A Wish for the Couple';const m=document.createElement('div');m.className='message';m.textContent=w.message||'';const g=document.createElement('div');g.className='guest';g.textContent='— '+(w.name||'A guest');page.append(h,m,g);holder.append(page);});
+ window.print(); setTimeout(showPage,500);
+});
+document.getElementById('logout').addEventListener('click',()=>{accessPassword='';wishes=[];document.getElementById('pass').value='';document.getElementById('book').style.display='none';document.getElementById('login').style.display='block';statusEl.textContent='The wishes book is locked.';});
 </script></body></html>

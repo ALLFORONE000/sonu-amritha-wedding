@@ -73,6 +73,7 @@ footer{text-align:center;padding:34px 0 60px;color:var(--gold);border-top:1px so
 #mute.on{display:block}
 #wishes-link{position:fixed;left:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:50;width:46px;height:46px;border-radius:50%;border:1px solid var(--gold);background:rgba(0,0,0,.85);color:var(--gold-hi);display:none;align-items:center;justify-content:center;text-decoration:none;font-size:1.15rem;box-shadow:0 0 14px rgba(212,175,55,.12)}
 #wishes-link.on{display:flex}
+#wishes-link.on{display:flex}
 #wishes-link:focus-visible{outline:2px solid var(--gold-hi);outline-offset:4px}
 html.js .rv{opacity:0;transform:translateY(36px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1);transition-delay:var(--d,0s);will-change:opacity,transform}
 html.js .rv.pop{transform:scale(.78)}
@@ -276,47 +277,18 @@ document.getElementById("cal").addEventListener("click", e=>{
   a.download = "wedding.ics"; document.body.appendChild(a); a.click(); a.remove();
 });
 
-// wishes
+// Wishes are stored centrally in Google Sheets through Apps Script.
+const WISHES_API = "https://script.google.com/macros/s/AKfycbyWKpS-hgsbjhbk4cJ89nH5aDUXP0-h1ElbuY3m9Vagr8PAyHagBVZZ_FMzcYXCng-s/exec";
 const list = document.getElementById("wishes"), fnote = document.getElementById("fnote");
 function addWish(w){
   const d = document.createElement("div"); d.className = "wish";
-  const b = document.createElement("b"); b.textContent = w.name;
-  const p = document.createElement("div"); p.textContent = w.msg;
-  const s = document.createElement("small"); s.textContent = w.at ? new Date(w.at).toLocaleDateString() : "";
+  const b = document.createElement("b"); b.textContent = w.name || "Guest";
+  const p = document.createElement("div"); p.textContent = w.message || w.msg || "";
+  const s = document.createElement("small");
+  const when = w.timestamp || w.at;
+  s.textContent = when ? new Date(when).toLocaleDateString() : "";
   d.append(b,p,s); list.appendChild(d);
 }
-const LOCAL_KEY = "sonu_amritha_wishes_v1";
-function loadLocalWishes(){
-  try{
-    const arr = JSON.parse(localStorage.getItem(LOCAL_KEY)||"[]");
-    list.textContent = "";
-    arr.forEach(addWish);
-  }catch(e){}
-}
-function saveLocalWish(w){
-  try{
-    const arr = JSON.parse(localStorage.getItem(LOCAL_KEY)||"[]");
-    arr.unshift(w);
-    localStorage.setItem(LOCAL_KEY, JSON.stringify(arr.slice(0,50)));
-    loadLocalWishes();
-    return true;
-  }catch(e){ return false; }
-}
-loadLocalWishes();
-
-let wishCol = null;
-(async()=>{
-  try{
-    const db = await claude.use("db");
-    if(!db) return;
-    wishCol = db.collection("wishes");
-    wishCol.orderBy("at","desc").limit(50).onSnapshot(snap=>{
-      list.textContent = "";
-      snap.forEach(doc=>addWish(doc.data ? doc.data() : doc));
-    }, ()=>{});
-  }catch(e){}
-})();
-
 const letterCard = document.getElementById("letterCard");
 const sealBtn = document.getElementById("sealBtn");
 const sealLabel = document.getElementById("sealLabel");
@@ -327,28 +299,28 @@ document.getElementById("f").addEventListener("submit", async e=>{
   if(letterCard.classList.contains("sealed")) return;
   const name = document.getElementById("name").value.trim();
   const msg = document.getElementById("msg").value.trim();
-  if(!name||!msg) return;
-  const entry = {name, msg, at: Date.now()};
-  let saved = false;
-  try{
-    if(wishCol){ await wishCol.doc("w"+entry.at+Math.floor(Math.random()*1e4)).set(entry); saved = true; }
-  }catch(err){}
-  if(!saved){ saved = saveLocalWish(entry); }
-
-  // Fold the letter and stamp the button to "Sealed"
-  letterCard.classList.add("sealed");
-  sealBtn.classList.add("is-sealed");
+  if(!name || !msg) return;
   sealBtn.disabled = true;
-  sealLabel.innerHTML = "✓<br>Sealed";
-
-  if(WHATSAPP){
-    const text = "Wedding wishes from " + name + ":\n" + msg;
-    window.open("https://wa.me/"+WHATSAPP+"?text="+encodeURIComponent(text),"_blank");
-    fnote.textContent = "Sealed with love! Tap Send in WhatsApp to deliver your wishes. 💐";
-  } else {
-    fnote.textContent = "Sealed with love — thank you for your wishes! 💐";
+  sealLabel.textContent = "Sending…";
+  fnote.textContent = "Sending your wishes…";
+  try{
+    const response = await fetch(WISHES_API, {
+      method: "POST",
+      headers: {"Content-Type":"text/plain;charset=utf-8"},
+      body: JSON.stringify({action:"add", name, message:msg})
+    });
+    const result = await response.json();
+    if(!result.success) throw new Error(result.message || "Could not save your wish.");
+    letterCard.classList.add("sealed");
+    sealBtn.classList.add("is-sealed");
+    sealLabel.innerHTML = "✓<br>Sealed";
+    fnote.textContent = "Sealed with love — your wishes have been saved! 💐";
+    e.target.reset();
+  }catch(err){
+    sealBtn.disabled = false;
+    sealLabel.innerHTML = "Seal &amp;<br>Send";
+    fnote.textContent = "Sorry, your wish could not be saved. Please try again. (" + err.message + ")";
   }
-  e.target.reset();
 });
 
 unfoldBtn.addEventListener("click", ()=>{
