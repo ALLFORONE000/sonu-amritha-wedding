@@ -72,9 +72,9 @@ footer{text-align:center;padding:34px 0 60px;color:var(--gold);border-top:1px so
 #gate.snapping .wax-btn{animation:none;visibility:hidden}
 #gate.snapping .seal-hint{visibility:hidden}
 #ash-canvas{position:fixed;inset:0;z-index:110;width:100vw;height:100dvh;pointer-events:none;display:none}
-#mute{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:50;width:46px;height:46px;border-radius:50%;border:1px solid var(--gold);background:rgba(0,0,0,.85);color:var(--gold-hi);font-size:1.2rem;cursor:pointer;display:none}
+#mute{-webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;touch-action:manipulation;outline:none;padding:0;line-height:1;position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:50;width:46px;height:46px;border-radius:50%;border:1px solid var(--gold);background:rgba(0,0,0,.85);color:var(--gold-hi);font-size:1.2rem;cursor:pointer;display:none}
 #mute.on{display:block}
-#wishes-link{position:fixed;left:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:50;width:46px;height:46px;border-radius:50%;border:1px solid var(--gold);background:rgba(0,0,0,.85);color:var(--gold-hi);display:none;align-items:center;justify-content:center;text-decoration:none;font-size:1.15rem;box-shadow:0 0 14px rgba(212,175,55,.12)}
+#wishes-link{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;touch-action:manipulation;outline:none;position:fixed;left:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:50;width:46px;height:46px;border-radius:50%;border:1px solid var(--gold);background:rgba(0,0,0,.85);color:var(--gold-hi);display:none;align-items:center;justify-content:center;text-decoration:none;font-size:1.15rem;box-shadow:0 0 14px rgba(212,175,55,.12)}
 #wishes-link.on{display:flex}
 #wishes-link.on{display:flex}
 #wishes-link:focus-visible{outline:2px solid var(--gold-hi);outline-offset:4px}
@@ -166,6 +166,10 @@ animation:waxStamp .55s cubic-bezier(.2,.9,.3,1.15) forwards}
 .cs-list{display:flex;flex-direction:column;gap:10px}
 .cs-btn{display:block;padding:13px 12px;border-radius:3px;background:linear-gradient(135deg,var(--gold-lo),var(--gold) 45%,var(--gold-hi));color:#120c00;text-decoration:none;font:inherit;font-weight:700;border:0;cursor:pointer;font-size:1rem}
 .cs-x{margin-top:14px;background:none;border:0;color:var(--gold);font:inherit;text-decoration:underline;cursor:pointer}
+#mute:focus,#wishes-link:focus{outline:none}
+#mute:focus-visible,#wishes-link:focus-visible{outline:2px solid var(--gold-hi);outline-offset:4px}
+#mute:active,#wishes-link:active{background:rgba(40,30,8,.95)}
+.cs-hint{margin:6px 2px 0;font-size:.85rem;color:var(--gold);opacity:.85;line-height:1.35}
 </style>
 </head>
 <body>
@@ -301,11 +305,23 @@ function icsText(list){
   L.push("END:VCALENDAR"); return L.join("\r\n");
 }
 function openIcs(list){
-  const blob = new Blob([icsText(list)],{type:"text/calendar;charset=utf-8"});
+  const txt = icsText(list);
+  if(isIOS){
+    window.location.href = "data:text/calendar;charset=utf-8," + encodeURIComponent(txt);
+    return;
+  }
+  const blob = new Blob([txt],{type:"text/calendar;charset=utf-8"});
   const url = URL.createObjectURL(blob);
-  // Navigating (not "download") lets iPhone Safari show its "Add to Calendar" sheet
   window.location.href = url;
   setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+function androidIntent(ev){
+  const ms = t => Date.UTC(+t.slice(0,4),+t.slice(4,6)-1,+t.slice(6,8),+t.slice(9,11),+t.slice(11,13));
+  const q = encodeURIComponent;
+  return "intent:#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.dir/event;"+
+    "S.title="+q(ev.title)+";S.eventLocation="+q(ev.loc)+";S.description="+q(ev.desc)+";"+
+    "l.beginTime="+ms(ev.start)+";l.endTime="+ms(ev.end)+";"+
+    "S.browser_fallback_url="+q(googleUrl(ev))+";end";
 }
 const sheet = document.createElement("div");
 sheet.id = "calsheet";
@@ -315,16 +331,19 @@ const csList = sheet.querySelector(".cs-list");
 function addBtn(text, fn, href){
   const el = document.createElement(href ? "a" : "button");
   el.className = "cs-btn"; el.textContent = text;
-  if(href){ el.href = href; el.target = "_blank"; el.rel = "noopener"; el.addEventListener("click",()=>sheet.classList.remove("on")); }
+  if(href){ el.href = href; if(href.indexOf("http")===0){ el.target = "_blank"; el.rel = "noopener"; } el.addEventListener("click",()=>sheet.classList.remove("on")); }
   else { el.type = "button"; el.addEventListener("click",()=>{ sheet.classList.remove("on"); fn(); }); }
   csList.appendChild(el);
 }
 if(isIOS){
-  addBtn("iPhone Calendar · Wedding + Reception", ()=>openIcs(EVENTS));
+  addBtn("Add both events · iPhone Calendar", ()=>openIcs(EVENTS));
   EVENTS.forEach(ev=>addBtn("Google Calendar · "+ev.label, null, googleUrl(ev)));
+  const hint=document.createElement("p"); hint.className="cs-hint";
+  hint.textContent="Tip: if nothing opens, open this page in Safari (not inside WhatsApp/Instagram).";
+  csList.appendChild(hint);
 }else if(isAndroid){
-  EVENTS.forEach(ev=>addBtn("Google Calendar · "+ev.label, null, googleUrl(ev)));
-  addBtn("Other calendar app · both events", ()=>openIcs(EVENTS));
+  EVENTS.forEach(ev=>addBtn("Add to Phone Calendar · "+ev.label, null, androidIntent(ev)));
+  addBtn("Google Calendar (browser) · Wedding", null, googleUrl(EVENTS[0]));
 }else{
   EVENTS.forEach(ev=>addBtn("Google Calendar · "+ev.label, null, googleUrl(ev)));
   addBtn("Apple / Outlook · both events (.ics)", ()=>openIcs(EVENTS));
